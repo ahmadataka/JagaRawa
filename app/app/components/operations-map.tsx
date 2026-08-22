@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 type Incident = { id: string; place: string; priority: 'critical' | 'high' | 'watch'; coords: { lng: number; lat: number }; hotspot: boolean };
 type Layers = { hotspot: boolean; peat: boolean; wind: boolean; exposure: boolean };
 
-export function OperationsMap({ incidents, selectedId, onSelect, layers }: { incidents: Incident[]; selectedId: string; onSelect: (id: string) => void; layers: Layers }) {
+export function OperationsMap({ incidents, selectedId, onSelect, layers, peatFeature }: { incidents: Incident[]; selectedId: string; onSelect: (id: string) => void; layers: Layers; peatFeature?: GeoJSON.Feature | null }) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [mapHealth, setMapHealth] = useState<'loading' | 'live' | 'fallback'>('fallback');
@@ -59,6 +59,12 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
     };
     if (map?.isStyleLoaded()) updateSource(); else map?.once('load', updateSource);
   }, [incidents]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const updatePeat = () => (map?.getSource('demo-peat') as maplibregl.GeoJSONSource | undefined)?.setData(peatFeature ? { type: 'FeatureCollection', features: [peatFeature] } : { type: 'FeatureCollection', features: [] });
+    if (map?.isStyleLoaded()) updatePeat(); else map?.once('load', updatePeat);
+  }, [peatFeature]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -5,13 +5,16 @@ export async function GET(request: NextRequest) {
   const longitude = Number(request.nextUrl.searchParams.get('lng'));
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return NextResponse.json({ error: 'lat and lng are required' }, { status: 400 });
   try {
-    const [weather, air] = await Promise.all([
+    const [weather, air, peat] = await Promise.all([
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,wind_direction_10m&timezone=UTC`, { next: { revalidate: 900 } }),
       fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${latitude}&longitude=${longitude}&current=pm2_5&timezone=UTC`, { next: { revalidate: 900 } }),
+      fetch(`https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/37/query?${new URLSearchParams({ where: '1=1', geometry: `${longitude},${latitude}`, geometryType: 'esriGeometryPoint', inSR: '4326', spatialRel: 'esriSpatialRelIntersects', outFields: '*', returnGeometry: 'true', f: 'geojson' })}`, { next: { revalidate: 86400 } }),
     ]);
     if (!weather.ok || !air.ok) throw new Error('Upstream weather or air-quality feed failed');
     const weatherData = await weather.json(); const airData = await air.json();
-    return NextResponse.json({ source: 'Open-Meteo', observedAt: weatherData.current?.time, weather: weatherData.current, air: airData.current });
+    const peatData = peat.ok ? await peat.json() : { features: [] };
+    const feature = peatData.features?.[0] ?? null;
+    return NextResponse.json({ source: 'Open-Meteo', observedAt: weatherData.current?.time, weather: weatherData.current, air: airData.current, peat: { inside: Boolean(feature), feature, source: 'BIG Satu Peta KHG layer 37', url: 'https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/37' } });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Context lookup failed' }, { status: 502 });
   }
