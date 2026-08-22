@@ -74,6 +74,7 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
+    for (const id of ['incident-clusters', 'incident-cluster-count', 'incident-point']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', layers.hotspot ? 'visible' : 'none');
     if (map.getLayer('peat-outline')) map.setLayoutProperty('peat-outline', 'visibility', layers.peat ? 'visible' : 'none');
     if (map.getLayer('wind-corridor')) map.setLayoutProperty('wind-corridor', 'visibility', layers.wind ? 'visible' : 'none');
   }, [layers]);
