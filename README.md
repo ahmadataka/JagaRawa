@@ -33,6 +33,99 @@ peatfr forecast + live hotspots + fire weather + peatland + exposure/access
 
 See [the architecture](docs/architecture.md), [data catalogue](docs/data-sources.md), [confidence model](docs/confidence.md), [UI brief](docs/ui-design.md), and [delivery roadmap](docs/roadmap.md).
 
+## Data Sources And Status
+
+Every displayed value must retain its original source, source timestamp, retrieval time, unit, spatial resolution, and quality flag. The web prototype labels values as **live**, **official context**, **prototype only**, or **not integrated**. A missing or unreachable source must never be treated as a zero or as evidence that a feature does not exist.
+
+| Source | Data used or planned | Status in current web prototype | How it is used | Important limitation |
+|---|---|---|---|---|
+| [NASA FIRMS VIIRS S-NPP NRT](https://firms.modaps.eosdis.nasa.gov/web-services/) | Active-fire detection coordinates, acquisition date/time, confidence, fire radiative power (FRP) | **Live**, last 24 hours, using a user-supplied FIRMS map key | Creates and ranks incident clusters | A satellite detection is evidence, not ground confirmation or burned area. |
+| [Open-Meteo Forecast API](https://open-meteo.com/en/docs) | Temperature, precipitation, 10 m wind speed/direction, 0-1 cm soil-moisture proxy | **Live** per selected incident | Fire-weather context and PeatFR input readiness | Model/reanalysis-derived context; soil moisture is not peat water-table depth. |
+| [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) | PM2.5 estimate | **Live** per selected incident | Smoke/exposure context | An estimate, not an authoritative BMKG station observation. |
+| [BIG Satu Peta KHG layer 37](https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/37) | Kesatuan Hidrologis Gambut (peat hydrological unit) geometry | **Live official context** per selected coordinate | Point-in-polygon peat/KHG intersection | An intersection is contextual evidence, not a fire probability. |
+| [OpenStreetMap](https://www.openstreetmap.org/) via [Overpass API](https://overpass-api.de/) | Roads, waterways, settlements, schools, clinics, hospitals | **Live when Overpass is reachable** | Nearest-feature access and exposure context within 5 km | Mapping completeness varies. An unavailable lookup is shown as unavailable, never “no nearby feature.” OSM attribution and ODbL terms apply. |
+| OpenStreetMap raster tiles / MapLibre | Basemap and map rendering | **Live** | Visual geographic context | Basemap does not provide incident or risk evidence. |
+| [`peatfr`](https://github.com/mellygsln/peatfr) | Peat-fire vulnerability forecast (PFVI), using water table, soil moisture, rainfall, temperature | **Prototype/readiness only** | Intended peat-specific risk engine | The browser prototype does not yet execute PeatFR or publish a PFVI value. |
+| Local peat hydrology sensors / partner stations | Water-table depth | **Not integrated** | Required preferred PeatFR input | Missing water-table depth lowers confidence; it must not be imputed as an observation. |
+| [BMKG Karhutla](https://www.bmkg.go.id/cuaca/karhutla) | Fire-weather indices, smoke imagery, wind and hotspot interpretation | **Not integrated** | Official weather and smoke validation | Requires a supported, reliable feed and applicable attribution before ingestion. |
+| [BMKG PM2.5](https://www.bmkg.go.id/kualitas-udara/pm25) | Station PM2.5 observations | **Not integrated** | Preferred authoritative air-quality context | Station observations are point measurements and need spatial matching. |
+| [SiPongi+](https://sipongi.gakkum.kehutanan.go.id/) | Indonesian hotspot, fire-area and emissions context | **Not integrated** | Official operational cross-check | Use an approved download/API; do not scrape unsupported services. |
+| [GPM IMERG](https://gpm.nasa.gov/data/imerg) | Satellite precipitation | **Not integrated** | Rainfall fallback and validation | Satellite rainfall is not a local rain gauge. |
+| [ERA5-Land](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land) | Historical temperature, precipitation and soil variables | **Not integrated** | Backfill and historical model training | Reanalysis is not a substitute for local sensors. |
+| [ESA WorldCover](https://esa-worldcover.org/en/data-access) | Land-cover/fuel class | **Not integrated** | Fuel and land-use feature | Periodic baseline rather than a live feed. |
+| [WorldPop](https://www.worldpop.org/) | Gridded population | **Not integrated** | Estimated people exposed downwind | A population raster is an estimate, not a live evacuation count. |
+| Historical FIRMS / validated burned-area and field feedback | Past events and confirmed outcomes | **Not integrated** | Training, calibration, and evaluation | Field confirmation is the strongest outcome label. |
+
+The detailed input contract and attribution notes are maintained in [docs/data-sources.md](docs/data-sources.md).
+
+## Classification And Confidence Formulas
+
+### Current live FIRMS prototype
+
+The current live queue is intentionally simple and does **not** yet blend the contextual data above into the displayed risk number. It groups all FIRMS detections in the past 24 hours by a rounded `0.1 degree x 0.1 degree` latitude/longitude cell:
+
+```text
+cluster_lat = round(latitude * 10) / 10
+cluster_lng = round(longitude * 10) / 10
+```
+
+For each cluster, let `n` be the number of detections and `H` equal `1` when the latest VIIRS confidence is `h`/`high`, otherwise `0`.
+
+```text
+prototype_risk = min(92, 45 + 12 * n + 16 * H)
+```
+
+```text
+priority = Critical  if prototype_risk >= 78
+           High      otherwise
+
+prototype_confidence = 76%  if H = 1
+                       54%  otherwise
+
+confidence_band = High    if H = 1
+                  Medium  otherwise
+```
+
+FRP, detection timestamp, selected-coordinate weather, PM2.5, soil moisture, KHG status, and access/exposure lookups are displayed as evidence or readiness context. They are **not currently used** in `prototype_risk` or `prototype_confidence`. This prevents the UI from claiming a sophisticated fused model that does not exist yet.
+
+### Target calibrated classification model
+
+The production approach is a calibrated, interpretable binary classifier for a peat-fire event in a `5 x 5 km` grid cell during the selected forecast horizon. Start with logistic regression and publish the feature values and calibrated probability:
+
+```text
+z = beta_0
+  + beta_1 * PFVI
+  + beta_2 * hotspot_recency
+  + beta_3 * hotspot_cluster_strength
+  + beta_4 * fire_weather
+  + beta_5 * peat_context
+  + beta_6 * fuel_and_burn_history
+  + beta_7 * exposure
+  + beta_8 * access
+
+risk_probability = 1 / (1 + exp(-z))
+```
+
+`beta` coefficients are learned only from time-split historical data, then the probability is calibrated on a held-out period using isotonic regression or Platt scaling. Thresholds must be selected with agency partners using recall, false-alarm burden, lead time, and available response capacity; they are not fixed in this repository.
+
+### Target decision-confidence score
+
+Risk probability and decision confidence are separate. Risk answers “how likely is the event?”; confidence answers “how trustworthy is this recommendation given its evidence?” The initial transparent score is:
+
+```text
+decision_confidence = 100 * (
+    0.30 * data_completeness
+  + 0.25 * data_freshness
+  + 0.25 * sensor_model_agreement
+  + 0.10 * peatfr_model_stability
+  + 0.10 * historical_calibration_quality
+)
+```
+
+All five terms are normalized to `[0, 1]` and returned with the recommendation. The proposed display bands are `High >= 75%`, `Medium 50-74%`, and `Low < 50%`. Missing water-table data, stale satellite observations, cloud impacts, unavailable access data, disagreement between active-fire and weather signals, or weak out-of-sample calibration reduce confidence. They should not automatically reduce the underlying risk probability.
+
+Bayesian updating is a later option: a calibrated prior probability can be updated with independent live evidence such as a confirmed field report. Reinforcement learning is not part of the operational risk score; it should first be evaluated offline for patrol or verification allocation after field outcome data is available.
+
 ## Principles
 
 - Reuse Indonesian science: run `peatfr` directly as the peat-risk engine.
