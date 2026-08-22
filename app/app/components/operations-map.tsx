@@ -5,7 +5,7 @@ import * as maplibregl from 'maplibre-gl';
 import { useEffect, useRef, useState } from 'react';
 
 type Incident = { id: string; place: string; priority: 'critical' | 'high' | 'watch'; coords: { lng: number; lat: number }; hotspot: boolean };
-type Layers = { hotspot: boolean; peat: boolean; wind: boolean; exposure: boolean };
+type Layers = { hotspot: boolean; peat: boolean; wind: boolean; exposure: boolean; landcover: boolean };
 
 export function OperationsMap({ incidents, selectedId, onSelect, layers, peatFeature }: { incidents: Incident[]; selectedId: string; onSelect: (id: string) => void; layers: Layers; peatFeature?: GeoJSON.Feature | null }) {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -29,6 +29,8 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers, peatFea
       map.addLayer({ id: 'peat-outline', type: 'fill', source: 'demo-peat', paint: { 'fill-color': '#2d7258', 'fill-opacity': 0.13, 'fill-outline-color': '#29674e' } });
       map.addSource('demo-wind', { type: 'geojson', data: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[112.3, -0.7], [114.2, -2.25], [115.5, -3.35]] } }] } });
       map.addLayer({ id: 'wind-corridor', type: 'line', source: 'demo-wind', paint: { 'line-color': '#397f91', 'line-width': 3, 'line-dasharray': [2, 2], 'line-opacity': 0.8 } });
+      map.addSource('worldcover', { type: 'raster', tiles: ['https://titiler.terrascope.be/wms?service=WMS&request=GetMap&version=1.3.0&layers=WORLDCOVER_2021_MAP&styles=&crs=EPSG%3A3857&bbox={bbox-epsg-3857}&width=256&height=256&format=image%2Fpng&transparent=true'], tileSize: 256, attribution: 'ESA WorldCover 2021' });
+      map.addLayer({ id: 'worldcover-overlay', type: 'raster', source: 'worldcover', layout: { visibility: 'none' }, paint: { 'raster-opacity': 0.48 } });
       map.addSource('incidents', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, cluster: true, clusterRadius: 42, clusterMaxZoom: 12 });
       map.addLayer({ id: 'incident-clusters', type: 'circle', source: 'incidents', filter: ['has', 'point_count'], paint: { 'circle-color': '#c74b32', 'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 50, 27], 'circle-stroke-width': 3, 'circle-stroke-color': '#fff' } });
       map.addLayer({ id: 'incident-cluster-count', type: 'symbol', source: 'incidents', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 }, paint: { 'text-color': '#fff' } });
@@ -83,6 +85,7 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers, peatFea
     for (const id of ['incident-clusters', 'incident-cluster-count', 'incident-point']) if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', layers.hotspot ? 'visible' : 'none');
     if (map.getLayer('peat-outline')) map.setLayoutProperty('peat-outline', 'visibility', layers.peat ? 'visible' : 'none');
     if (map.getLayer('wind-corridor')) map.setLayoutProperty('wind-corridor', 'visibility', layers.wind ? 'visible' : 'none');
+    if (map.getLayer('worldcover-overlay')) map.setLayoutProperty('worldcover-overlay', 'visibility', layers.landcover ? 'visible' : 'none');
   }, [layers]);
 
   return <div className="real-map">
