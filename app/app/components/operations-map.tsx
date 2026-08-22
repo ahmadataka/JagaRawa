@@ -2,7 +2,7 @@
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import * as maplibregl from 'maplibre-gl';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Incident = { id: string; place: string; priority: 'critical' | 'high' | 'watch'; coords: { lng: number; lat: number }; hotspot: boolean };
 type Layers = { hotspot: boolean; peat: boolean; wind: boolean; exposure: boolean };
@@ -11,13 +11,14 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markers = useRef<maplibregl.Marker[]>([]);
+  const [mapHealth, setMapHealth] = useState<'loading' | 'live' | 'fallback'>('loading');
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
     const map = new maplibregl.Map({ container: mapContainer.current, style: {
       version: 8,
       sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '&copy; OpenStreetMap contributors' } },
-      layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+      layers: [{ id: 'base', type: 'background', paint: { 'background-color': '#dce7d2' } }, { id: 'osm', type: 'raster', source: 'osm' }],
     }, center: [113.7, -2.15], zoom: 5.3, attributionControl: true, renderWorldCopies: false });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
@@ -26,7 +27,9 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
       map.addLayer({ id: 'peat-outline', type: 'fill', source: 'demo-peat', paint: { 'fill-color': '#2d7258', 'fill-opacity': 0.13, 'fill-outline-color': '#29674e' } });
       map.addSource('demo-wind', { type: 'geojson', data: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[112.3, -0.7], [114.2, -2.25], [115.5, -3.35]] } }] } });
       map.addLayer({ id: 'wind-corridor', type: 'line', source: 'demo-wind', paint: { 'line-color': '#397f91', 'line-width': 3, 'line-dasharray': [2, 2], 'line-opacity': 0.8 } });
+      window.setTimeout(() => setMapHealth('live'), 900);
     });
+    map.on('error', () => setMapHealth('fallback'));
     mapRef.current = map;
     return () => { map.remove(); mapRef.current = null; };
   }, []);
@@ -55,5 +58,15 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
     if (map.getLayer('wind-corridor')) map.setLayoutProperty('wind-corridor', 'visibility', layers.wind ? 'visible' : 'none');
   }, [layers]);
 
-  return <div className="real-map"><div ref={mapContainer} className="maplibre-container" /><div className="map-disclaimer">OpenStreetMap basemap. Peat and wind overlays are prototype layers.</div></div>;
+  return <div className="real-map">
+    <div className="local-map-fallback" aria-label="Local Kalimantan geographic fallback">
+      <div className="fallback-land"><span className="fallback-river river-a" /><span className="fallback-river river-b" /><span className="fallback-peat" /></div>
+      <span className="fallback-label label-west">Kalimantan Barat</span><span className="fallback-label label-central">Kalimantan Tengah</span><span className="fallback-label label-south">Kalimantan Selatan</span>
+      {incidents.map((incident) => <button key={incident.id} className={`fallback-marker ${incident.priority} ${selectedId === incident.id ? 'selected' : ''}`} style={{ left: `${((incident.coords.lng - 108) / 9) * 100}%`, top: `${((1 - (incident.coords.lat + 4) / 5) * 100)}%` }} onClick={() => onSelect(incident.id)} aria-label={`Select ${incident.place}`} />)}
+      <span className="fallback-note">Local geographic fallback: Kalimantan extent and incident coordinates</span>
+    </div>
+    <div ref={mapContainer} className={`maplibre-container ${mapHealth === 'fallback' ? 'map-hidden' : ''}`} />
+    <div className={`map-health ${mapHealth}`}>{mapHealth === 'live' ? 'Basemap connected' : mapHealth === 'loading' ? 'Loading basemap' : 'Fallback map active'}</div>
+    <div className="map-disclaimer">OpenStreetMap basemap. Peat and wind overlays are prototype layers.</div>
+  </div>;
 }
