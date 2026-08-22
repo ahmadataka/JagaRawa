@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+.maplibre-container,.maplibre-container .maplibregl-canvas-container,.maplibre-container .maplibregl-map{overflow:hidden!important}
 .local-map-fallback{z-index:0}.maplibre-container{z-index:1;background:#dce7d2}
 .parameter-table a{color:#28654e;text-decoration:underline;text-underline-offset:2px}.parameter-table a:hover{color:#173f36}
 .map-health{top:98px!important;pointer-events:none!important}
