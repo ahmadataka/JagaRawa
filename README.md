@@ -1,8 +1,8 @@
-# RawaGuard
+# JagaRawa
 
-**Peat Fire Intelligence for Kalimantan**
+**Sistem Intelijen Kebakaran Gambut untuk Kalimantan**
 
-RawaGuard is an open, human-in-the-loop decision-support prototype for Indonesian peatland fire prevention and response. It combines the Indonesian-developed [`peatfr`](https://github.com/mellygsln/peatfr) risk model with active-fire, weather, smoke, peatland, exposure, and access data.
+JagaRawa is an open, human-in-the-loop decision-support prototype for Indonesian peatland fire prevention and response. It combines the Indonesian-developed [`peatfr`](https://github.com/mellygsln/peatfr) risk model with active-fire, weather, smoke, peatland, exposure, and access data.
 
 The product does not autonomously dispatch people or equipment. It helps an operator answer four practical questions:
 
@@ -15,11 +15,11 @@ The product does not autonomously dispatch people or equipment. It helps an oper
 
 Peatland fires can grow underground, return after apparent suppression, and produce smoke that affects communities far from the original fire. Responders must often decide where to send limited teams, water, and aircraft while the available information is spread across different maps and systems.
 
-Indonesia already has important government capabilities. SiPongi+ provides official hotspot and fire information; BMKG provides fire-weather warnings, satellite smoke analysis, and air-quality monitoring; BNPB and BPBD coordinate prevention and response. RawaGuard is designed to support, not replace, these systems.
+Indonesia already has important government capabilities. SiPongi+ provides official hotspot and fire information; BMKG provides fire-weather warnings, satellite smoke analysis, and air-quality monitoring; BNPB and BPBD coordinate prevention and response. JagaRawa is designed to support, not replace, these systems.
 
-The difference is the decision layer. Existing products primarily show the current fire, weather, smoke, or air-quality situation. RawaGuard brings those signals together with `peatfr`'s peat-specific forecast, nearby people and critical facilities, and access constraints. It then creates a ranked queue that states: **where to look first, what action to consider, why, and how confident the system is.**
+The difference is the decision layer. Existing products primarily show the current fire, weather, smoke, or air-quality situation. JagaRawa brings those signals together with `peatfr`'s peat-specific forecast, nearby people and critical facilities, and access constraints. It then creates a ranked queue that states: **where to look first, what action to consider, why, and how confident the system is.**
 
-For example, instead of showing a hotspot alone, RawaGuard can identify it as a high-confidence peatland incident with dry forecast conditions, an at-risk village downwind, and a recommendation to verify it within two hours. If a critical input is missing, such as water-table depth, the system clearly lowers its confidence rather than presenting false certainty.
+For example, instead of showing a hotspot alone, JagaRawa can identify it as a high-confidence peatland incident with dry forecast conditions, an at-risk village downwind, and a recommendation to verify it within two hours. If a critical input is missing, such as water-table depth, the system clearly lowers its confidence rather than presenting false certainty.
 
 ## MVP
 

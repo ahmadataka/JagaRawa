@@ -20,4 +20,4 @@
 
 ## Government complement, not replacement
 
-Government systems already provide hotspot monitoring, fire-weather warning, smoke analysis, air-quality observation, and response coordination. RawaGuard's intended contribution is to combine peat-specific forecast risk with live evidence, exposure, access, recommendations, and explicit uncertainty in one operator workflow.
+Government systems already provide hotspot monitoring, fire-weather warning, smoke analysis, air-quality observation, and response coordination. JagaRawa's intended contribution is to combine peat-specific forecast risk with live evidence, exposure, access, recommendations, and explicit uncertainty in one operator workflow.

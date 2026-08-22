@@ -1,6 +1,6 @@
 # Risk and Confidence
 
-RawaGuard shows both **risk probability** and **decision confidence**. They are deliberately separate.
+JagaRawa shows both **risk probability** and **decision confidence**. They are deliberately separate.
 
 - Risk probability asks: "How likely is a peat-fire event in this grid cell during the forecast window?"
 - Decision confidence asks: "How trustworthy is this recommendation given the available evidence?"

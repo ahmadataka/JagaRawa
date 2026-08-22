@@ -4,7 +4,7 @@ The primary interface is an operations workspace for an analyst or incident coor
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
-│ RawaGuard | Kalimantan | Updated 12:00 WIB                       │
+│ JagaRawa | Kalimantan | Updated 12:00 WIB                        │
 │ [Now] [24h] [72h]  Risk [All v]  Confidence [All v]              │
 ├──────────────────────┬───────────────────────────┬───────────────┤
 │ Incident queue       │ Interactive map           │ Detail        │

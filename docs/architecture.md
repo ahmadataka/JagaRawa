@@ -2,7 +2,7 @@
 
 ## System boundary
 
-RawaGuard is a decision-support system, not an autonomous fire-dispatch system. It produces a ranked work queue for human operators and retains the evidence behind each recommendation.
+JagaRawa is a decision-support system, not an autonomous fire-dispatch system. It produces a ranked work queue for human operators and retains the evidence behind each recommendation.
 
 ```text
 Data sources

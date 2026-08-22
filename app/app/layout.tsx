@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'RawaGuard | Peat Fire Intelligence',
+  title: 'JagaRawa | Sistem Intelijen Kebakaran Gambut',
   description: 'A human-in-the-loop peat-fire decision-support prototype for Kalimantan.',
 };
 
