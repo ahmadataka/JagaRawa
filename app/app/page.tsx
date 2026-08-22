@@ -58,7 +58,7 @@ export default function Home() {
   useEffect(() => { fetch('/api/firms').then((response) => response.json()).then((data) => { setFeedStatus(data.message); if (data.mode === 'live' && data.incidents?.length) { setActiveIncidents(data.incidents); setSelectedId(data.incidents[0].id); } }).catch(() => setFeedStatus('FIRMS feed unavailable; representative incidents remain visible.')); }, []);
   const selected = activeIncidents.find((incident) => incident.id === selectedId) ?? activeIncidents[0];
   const visibleIncidents = activeIncidents.filter((incident) => filter === 'all' || incident.priority === filter);
-  useEffect(() => { queueItems.current[selectedId]?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, [selectedId]);
+  useEffect(() => { requestAnimationFrame(() => queueItems.current[selectedId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })); }, [selectedId, visibleIncidents.length]);
   const updateStatus = (value: string) => setStatus((previous) => ({ ...previous, [selected.id]: value }));
   return <main className="app-shell">
     <header className="topbar"><div className="brand"><span className="brand-mark">JR</span><span>JagaRawa</span><small>Operations MVP</small></div><div className="center-status"><span className="pulse" /> {feedStatus} </div><button className="health-button" onClick={() => alert(feedStatus)}>Data health</button></header>

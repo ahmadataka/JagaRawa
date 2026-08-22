@@ -61,6 +61,14 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
 
   useEffect(() => {
     const map = mapRef.current;
+    const selected = incidents.find((incident) => incident.id === selectedId);
+    if (!map || !selected) return;
+    const flyToSelected = () => map.flyTo({ center: [selected.coords.lng, selected.coords.lat], zoom: Math.max(map.getZoom(), 8), duration: 650, essential: true });
+    if (map.loaded()) flyToSelected(); else map.once('load', flyToSelected);
+  }, [incidents, selectedId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!map || !map.isStyleLoaded()) return;
     if (map.getLayer('peat-outline')) map.setLayoutProperty('peat-outline', 'visibility', layers.peat ? 'visible' : 'none');
     if (map.getLayer('wind-corridor')) map.setLayoutProperty('wind-corridor', 'visibility', layers.wind ? 'visible' : 'none');
