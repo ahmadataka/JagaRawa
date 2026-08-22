@@ -31,7 +31,7 @@ peatfr forecast + live hotspots + fire weather + peatland + exposure/access
                     risk, confidence, and recommended action
 ```
 
-See [the architecture](docs/architecture.md), [data catalogue](docs/data-sources.md), [confidence model](docs/confidence.md), [UI brief](docs/ui-design.md), and [delivery roadmap](docs/roadmap.md).
+See [the architecture](docs/architecture.md), [data catalogue](docs/data-sources.md), [confidence model](docs/confidence.md), [water-table ingestion contract](docs/water-table-ingestion.md), [UI brief](docs/ui-design.md), and [delivery roadmap](docs/roadmap.md).
 
 ## Data Sources And Status
 
@@ -46,7 +46,7 @@ Every displayed value must retain its original source, source timestamp, retriev
 | [OpenStreetMap](https://www.openstreetmap.org/) via [Overpass API](https://overpass-api.de/) | Roads, waterways, settlements, schools, clinics, hospitals | **Live when Overpass is reachable** | Nearest-feature access and exposure context within 5 km | Mapping completeness varies. An unavailable lookup is shown as unavailable, never “no nearby feature.” A local [Geofabrik Kalimantan extract](https://download.geofabrik.de/asia/indonesia/kalimantan.html) is the planned reliable fallback. OSM attribution and ODbL terms apply. |
 | OpenStreetMap raster tiles / MapLibre | Basemap and map rendering | **Live** | Visual geographic context | Basemap does not provide incident or risk evidence. |
 | [`peatfr`](https://github.com/mellygsln/peatfr) | Peat-fire vulnerability forecast (PFVI), using water table, soil moisture, rainfall, temperature | **Prototype/readiness only** | Intended peat-specific risk engine | The browser prototype does not yet execute PeatFR or publish a PFVI value. |
-| Local peat hydrology sensors / partner stations | Water-table depth | **Not integrated** | Required preferred PeatFR input | Missing water-table depth lowers confidence; it must not be imputed as an observation. |
+| Local peat hydrology sensors / partner stations | Water-table depth | **Ingestion-ready; no partner feed configured** | Required preferred PeatFR input | Configure `WATER_TABLE_CSV_URL` with the validated CSV contract. Missing water-table depth lowers confidence; it must not be imputed as an observation. |
 | [BMKG Karhutla](https://www.bmkg.go.id/cuaca/karhutla) | Fire-weather indices, smoke imagery, wind and hotspot interpretation | **Not integrated** | Official weather and smoke validation | Requires a supported, reliable feed and applicable attribution before ingestion. |
 | [BMKG PM2.5](https://www.bmkg.go.id/kualitas-udara/pm25) | Station PM2.5 observations | **Not integrated** | Preferred authoritative air-quality context | Station observations are point measurements and need spatial matching. |
 | [SiPongi+](https://sipongi.gakkum.kehutanan.go.id/) | Indonesian hotspot, fire-area and emissions context | **Not integrated** | Official operational cross-check | Use an approved download/API; do not scrape unsupported services. |
