@@ -39,7 +39,7 @@ Every displayed value must retain its original source, source timestamp, retriev
 
 | Source | Data used or planned | Status in current web prototype | How it is used | Important limitation |
 |---|---|---|---|---|
-| [NASA FIRMS VIIRS S-NPP NRT](https://firms.modaps.eosdis.nasa.gov/web-services/) | Active-fire detection coordinates, acquisition date/time, confidence, fire radiative power (FRP) | **Live**, last 24 hours, using a user-supplied FIRMS map key | Creates and ranks incident clusters | A satellite detection is evidence, not ground confirmation or burned area. |
+| [NASA FIRMS VIIRS S-NPP NRT](https://firms.modaps.eosdis.nasa.gov/web-services/) | Active-fire detection coordinates, acquisition date/time, confidence, fire radiative power (FRP) | **Live**, active clusters from the last 24 hours plus up to 10-day history, using a user-supplied FIRMS map key | Creates and ranks incident clusters and persistence evidence | The API is queried in two five-day windows; when its dated window is unavailable, the UI reports a five-day fallback. A satellite detection is evidence, not ground confirmation or burned area. |
 | [Open-Meteo Forecast API](https://open-meteo.com/en/docs) | Temperature, precipitation, 10 m wind speed/direction, 0-1 cm soil-moisture proxy | **Live** per selected incident | Fire-weather context and PeatFR input readiness | Model/reanalysis-derived context; soil moisture is not peat water-table depth. |
 | [Open-Meteo Air Quality API](https://open-meteo.com/en/docs/air-quality-api) | PM2.5 estimate | **Live** per selected incident | Smoke/exposure context | An estimate, not an authoritative BMKG station observation. |
 | [BIG Satu Peta KHG layer 37](https://kspservices.big.go.id/satupeta/rest/services/PUBLIK/SUMBER_DAYA_ALAM_DAN_LINGKUNGAN/MapServer/37) | Kesatuan Hidrologis Gambut (peat hydrological unit) geometry | **Live official context** per selected coordinate | Point-in-polygon peat/KHG intersection | An intersection is contextual evidence, not a fire probability. |
@@ -62,31 +62,30 @@ The detailed input contract and attribution notes are maintained in [docs/data-s
 
 ### Current live FIRMS prototype
 
-The current live queue is intentionally simple and does **not** yet blend the contextual data above into the displayed risk number. It groups all FIRMS detections in the past 24 hours by a rounded `0.1 degree x 0.1 degree` latitude/longitude cell:
+The current live queue is intentionally simple and does **not** yet blend the contextual data above into the displayed risk number. It groups FIRMS detections from the preceding up-to-10-day window by a rounded `0.1 degree x 0.1 degree` latitude/longitude cell, but only displays clusters with at least one detection in the past 24 hours. If the dated historical request is unavailable, the response reports and uses a five-day window:
 
 ```text
 cluster_lat = round(latitude * 10) / 10
 cluster_lng = round(longitude * 10) / 10
 ```
 
-For each cluster, let `n` be the number of detections and `H` equal `1` when the latest VIIRS confidence is `h`/`high`, otherwise `0`.
+For each active cluster, let `n` be the number of detections during the last 24 hours, `d` be the number of distinct acquisition dates in the preceding 10 days, and `H` equal `1` when the latest VIIRS confidence is `h`/`high`, otherwise `0`.
 
 ```text
-prototype_risk = min(92, 45 + 12 * n + 16 * H)
+prototype_risk = min(92, 45 + 12 * n + 16 * H + 6 * min(3, max(0, d - 1)))
 ```
 
 ```text
 priority = Critical  if prototype_risk >= 78
            High      otherwise
 
-prototype_confidence = 76%  if H = 1
-                       54%  otherwise
+prototype_confidence = min(90, (76 if H = 1 else 54) + 8 * I(d >= 2)) percent
 
-confidence_band = High    if H = 1
+confidence_band = High    if prototype_confidence >= 75%
                   Medium  otherwise
 ```
 
-FRP, detection timestamp, selected-coordinate weather, PM2.5, soil moisture, KHG status, and access/exposure lookups are displayed as evidence or readiness context. They are **not currently used** in `prototype_risk` or `prototype_confidence`. This prevents the UI from claiming a sophisticated fused model that does not exist yet.
+Ten-day persistence is capped at 18 risk points and contributes an 8-point confidence increase after a second observed day. FRP, detection timestamp, selected-coordinate weather, PM2.5, soil moisture, KHG status, and access/exposure lookups are displayed as evidence or readiness context. They are **not currently used** in `prototype_risk` or `prototype_confidence`. This prevents the UI from claiming a sophisticated fused model that does not exist yet.
 
 ### Target calibrated classification model
 
