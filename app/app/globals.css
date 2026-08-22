@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+.local-map-fallback{z-index:0}.maplibre-container{z-index:1;background:#dce7d2}
 .parameter-table a{color:#28654e;text-decoration:underline;text-underline-offset:2px}.parameter-table a:hover{color:#173f36}
 .map-health{top:98px!important;pointer-events:none!important}
 .fallback-hidden{display:none}.fallback-scene{position:absolute;inset:0;transform-origin:center;touch-action:none}.local-map-fallback{touch-action:none}.fallback-controls{position:absolute;right:11px;bottom:11px;z-index:4;display:flex;gap:4px}.fallback-controls button{background:#fffdf8;border:1px solid #9fb59a;border-radius:3px;padding:6px 9px;color:#285a46;font-weight:bold}.fallback-controls button:last-child{font-size:10px}.local-map-fallback .fallback-note{z-index:4}
