@@ -14,7 +14,11 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
-    const map = new maplibregl.Map({ container: mapContainer.current, style: 'https://tiles.openfreemap.org/styles/liberty', center: [113.7, -2.15], zoom: 5.3, attributionControl: true });
+    const map = new maplibregl.Map({ container: mapContainer.current, style: {
+      version: 8,
+      sources: { osm: { type: 'raster', tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'], tileSize: 256, attribution: '&copy; OpenStreetMap contributors' } },
+      layers: [{ id: 'osm', type: 'raster', source: 'osm' }],
+    }, center: [113.7, -2.15], zoom: 5.3, attributionControl: true, renderWorldCopies: false });
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
     map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
     map.on('load', () => {
