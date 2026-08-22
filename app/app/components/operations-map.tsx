@@ -10,7 +10,6 @@ type Layers = { hotspot: boolean; peat: boolean; wind: boolean; exposure: boolea
 export function OperationsMap({ incidents, selectedId, onSelect, layers }: { incidents: Incident[]; selectedId: string; onSelect: (id: string) => void; layers: Layers }) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
-  const markers = useRef<maplibregl.Marker[]>([]);
   const [mapHealth, setMapHealth] = useState<'loading' | 'live' | 'fallback'>('fallback');
   const [fallbackZoom, setFallbackZoom] = useState(1);
   const [fallbackPan, setFallbackPan] = useState({ x: 0, y: 0 });
@@ -30,6 +29,16 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
       map.addLayer({ id: 'peat-outline', type: 'fill', source: 'demo-peat', paint: { 'fill-color': '#2d7258', 'fill-opacity': 0.13, 'fill-outline-color': '#29674e' } });
       map.addSource('demo-wind', { type: 'geojson', data: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[112.3, -0.7], [114.2, -2.25], [115.5, -3.35]] } }] } });
       map.addLayer({ id: 'wind-corridor', type: 'line', source: 'demo-wind', paint: { 'line-color': '#397f91', 'line-width': 3, 'line-dasharray': [2, 2], 'line-opacity': 0.8 } });
+      map.addSource('incidents', { type: 'geojson', data: { type: 'FeatureCollection', features: [] }, cluster: true, clusterRadius: 42, clusterMaxZoom: 12 });
+      map.addLayer({ id: 'incident-clusters', type: 'circle', source: 'incidents', filter: ['has', 'point_count'], paint: { 'circle-color': '#c74b32', 'circle-radius': ['step', ['get', 'point_count'], 18, 10, 22, 50, 27], 'circle-stroke-width': 3, 'circle-stroke-color': '#fff' } });
+      map.addLayer({ id: 'incident-cluster-count', type: 'symbol', source: 'incidents', filter: ['has', 'point_count'], layout: { 'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12 }, paint: { 'text-color': '#fff' } });
+      map.addLayer({ id: 'incident-point', type: 'circle', source: 'incidents', filter: ['!', ['has', 'point_count']], paint: { 'circle-color': ['match', ['get', 'priority'], 'critical', '#cf4b31', 'high', '#e38d2c', '#d7b437'], 'circle-radius': 10, 'circle-stroke-width': 3, 'circle-stroke-color': '#fff' } });
+      map.on('click', 'incident-clusters', (event) => { const feature = event.features?.[0]; const clusterId = feature?.properties?.cluster_id; if (clusterId === undefined) return; (map.getSource('incidents') as maplibregl.GeoJSONSource).getClusterExpansionZoom(clusterId, (error, zoom) => { if (!error && zoom) map.easeTo({ center: (feature.geometry as GeoJSON.Point).coordinates as [number, number], zoom }); }); });
+      map.on('click', 'incident-point', (event) => { const id = event.features?.[0]?.properties?.id; if (id) onSelect(id); });
+      map.on('mouseenter', 'incident-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'incident-clusters', () => { map.getCanvas().style.cursor = ''; });
+      map.on('mouseenter', 'incident-point', () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'incident-point', () => { map.getCanvas().style.cursor = ''; });
       window.setTimeout(() => {
         if (map.isSourceLoaded('osm')) setMapHealth('live');
       }, 1600);
@@ -44,20 +53,12 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
-    const renderMarkers = () => {
-      markers.current.forEach((marker) => marker.remove());
-      markers.current = incidents.map((incident) => {
-        const element = document.createElement('button');
-        element.className = `fire-marker ${incident.priority} ${incident.id === selectedId ? 'selected' : ''}`;
-        element.setAttribute('aria-label', `Select ${incident.place}`);
-        element.onclick = () => onSelect(incident.id);
-        const marker = new maplibregl.Marker({ element, anchor: 'center' }).setLngLat([incident.coords.lng, incident.coords.lat]).addTo(map);
-        return marker;
-      });
+    const updateSource = () => {
+      const source = map?.getSource('incidents') as maplibregl.GeoJSONSource | undefined;
+      source?.setData({ type: 'FeatureCollection', features: incidents.map((incident) => ({ type: 'Feature', properties: { id: incident.id, priority: incident.priority }, geometry: { type: 'Point', coordinates: [incident.coords.lng, incident.coords.lat] } })) });
     };
-    if (map.loaded()) renderMarkers(); else map.once('load', renderMarkers);
-  }, [incidents, onSelect, selectedId]);
+    if (map?.isStyleLoaded()) updateSource(); else map?.once('load', updateSource);
+  }, [incidents]);
 
   useEffect(() => {
     const map = mapRef.current;
