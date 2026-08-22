@@ -63,7 +63,10 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
     const map = mapRef.current;
     const selected = incidents.find((incident) => incident.id === selectedId);
     if (!map || !selected) return;
-    const flyToSelected = () => map.flyTo({ center: [selected.coords.lng, selected.coords.lat], zoom: Math.max(map.getZoom(), 8), duration: 650, essential: true });
+    const flyToSelected = () => {
+      map.stop();
+      map.jumpTo({ center: [selected.coords.lng, selected.coords.lat], zoom: Math.max(map.getZoom(), 8) });
+    };
     if (map.loaded()) flyToSelected(); else map.once('load', flyToSelected);
   }, [incidents, selectedId]);
 
