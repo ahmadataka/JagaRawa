@@ -11,7 +11,10 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const markers = useRef<maplibregl.Marker[]>([]);
-  const [mapHealth, setMapHealth] = useState<'loading' | 'live' | 'fallback'>('loading');
+  const [mapHealth, setMapHealth] = useState<'loading' | 'live' | 'fallback'>('fallback');
+  const [fallbackZoom, setFallbackZoom] = useState(1);
+  const [fallbackPan, setFallbackPan] = useState({ x: 0, y: 0 });
+  const dragStart = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!mapContainer.current || mapRef.current) return;
@@ -27,7 +30,12 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
       map.addLayer({ id: 'peat-outline', type: 'fill', source: 'demo-peat', paint: { 'fill-color': '#2d7258', 'fill-opacity': 0.13, 'fill-outline-color': '#29674e' } });
       map.addSource('demo-wind', { type: 'geojson', data: { type: 'FeatureCollection', features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: [[112.3, -0.7], [114.2, -2.25], [115.5, -3.35]] } }] } });
       map.addLayer({ id: 'wind-corridor', type: 'line', source: 'demo-wind', paint: { 'line-color': '#397f91', 'line-width': 3, 'line-dasharray': [2, 2], 'line-opacity': 0.8 } });
-      window.setTimeout(() => setMapHealth('live'), 900);
+      window.setTimeout(() => {
+        if (map.isSourceLoaded('osm')) setMapHealth('live');
+      }, 1600);
+    });
+    map.on('sourcedata', (event) => {
+      if (event.sourceId === 'osm' && event.isSourceLoaded) setMapHealth('live');
     });
     map.on('error', () => setMapHealth('fallback'));
     mapRef.current = map;
@@ -59,10 +67,11 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers }: { inc
   }, [layers]);
 
   return <div className="real-map">
-    <div className="local-map-fallback" aria-label="Local Kalimantan geographic fallback">
-      <div className="fallback-land"><span className="fallback-river river-a" /><span className="fallback-river river-b" /><span className="fallback-peat" /></div>
+    <div className={`local-map-fallback ${mapHealth === 'live' ? 'fallback-hidden' : ''}`} aria-label="Local Kalimantan geographic fallback" onWheel={(event) => { event.preventDefault(); setFallbackZoom((zoom) => Math.min(2.4, Math.max(0.8, zoom + (event.deltaY < 0 ? 0.12 : -0.12)))); }} onPointerDown={(event) => { dragStart.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (!dragStart.current) return; setFallbackPan((pan) => ({ x: pan.x + event.clientX - dragStart.current!.x, y: pan.y + event.clientY - dragStart.current!.y })); dragStart.current = { x: event.clientX, y: event.clientY }; }} onPointerUp={() => { dragStart.current = null; }}>
+      <div className="fallback-scene" style={{ transform: `translate(${fallbackPan.x}px, ${fallbackPan.y}px) scale(${fallbackZoom})` }}><div className="fallback-land"><span className="fallback-river river-a" /><span className="fallback-river river-b" /><span className="fallback-peat" /></div>
       <span className="fallback-label label-west">Kalimantan Barat</span><span className="fallback-label label-central">Kalimantan Tengah</span><span className="fallback-label label-south">Kalimantan Selatan</span>
-      {incidents.map((incident) => <button key={incident.id} className={`fallback-marker ${incident.priority} ${selectedId === incident.id ? 'selected' : ''}`} style={{ left: `${((incident.coords.lng - 108) / 9) * 100}%`, top: `${((1 - (incident.coords.lat + 4) / 5) * 100)}%` }} onClick={() => onSelect(incident.id)} aria-label={`Select ${incident.place}`} />)}
+      {incidents.map((incident) => <button key={incident.id} className={`fallback-marker ${incident.priority} ${selectedId === incident.id ? 'selected' : ''}`} style={{ left: `${((incident.coords.lng - 108) / 9) * 100}%`, top: `${((1 - (incident.coords.lat + 4) / 5) * 100)}%` }} onClick={() => onSelect(incident.id)} aria-label={`Select ${incident.place}`} />)}</div>
+      <div className="fallback-controls"><button onClick={() => setFallbackZoom((zoom) => Math.min(2.4, zoom + 0.2))}>+</button><button onClick={() => setFallbackZoom((zoom) => Math.max(0.8, zoom - 0.2))}>-</button><button onClick={() => { setFallbackZoom(1); setFallbackPan({ x: 0, y: 0 }); }}>Reset</button></div>
       <span className="fallback-note">Local geographic fallback: Kalimantan extent and incident coordinates</span>
     </div>
     <div ref={mapContainer} className={`maplibre-container ${mapHealth === 'fallback' ? 'map-hidden' : ''}`} />
