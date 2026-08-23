@@ -98,6 +98,6 @@ export function OperationsMap({ incidents, selectedId, onSelect, layers, peatFea
     </div>
     <div ref={mapContainer} className={`maplibre-container ${mapHealth === 'fallback' ? 'map-hidden' : ''}`} />
     <div className={`map-health ${mapHealth}`}>{mapHealth === 'live' ? 'Basemap connected' : mapHealth === 'loading' ? 'Loading basemap' : 'Fallback map active'}</div>
-    <div className="map-disclaimer">OpenStreetMap basemap. Peat and wind overlays are prototype layers.</div>
+    <div className="map-disclaimer"><b>PROTOTYPE LAYERS</b> OpenStreetMap basemap is live. Peat, wind, and WorldCover overlays are context only.</div>
   </div>;
 }
