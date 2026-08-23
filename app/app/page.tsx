@@ -1,72 +1,828 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { OperationsMap } from './components/operations-map';
+import { useEffect, useRef, useState } from "react";
+import { OperationsMap } from "./components/operations-map";
 
-type Priority = 'critical' | 'high' | 'watch';
-type Confidence = 'high' | 'medium' | 'low';
-type Incident = { id: string; place: string; region: string; priority: Priority; risk: number; confidence: number; confidenceBand: Confidence; action: string; deadline: string; coords: { lng: number; lat: number }; hotspot: boolean; pm25: string; evidence: string[]; limitation: string; status: string };
+type Priority = "critical" | "high" | "watch";
+type Confidence = "high" | "medium" | "low";
+type Incident = {
+  id: string;
+  place: string;
+  region: string;
+  priority: Priority;
+  risk: number;
+  confidence: number;
+  confidenceBand: Confidence;
+  action: string;
+  deadline: string;
+  coords: { lng: number; lat: number };
+  hotspot: boolean;
+  pm25: string;
+  evidence: string[];
+  limitation: string;
+  status: string;
+};
 
 const incidents: Incident[] = [
-  { id: 'pulang-pisau', place: 'Pulang Pisau', region: 'Kalimantan Tengah', priority: 'critical', risk: 82, confidence: 78, confidenceBand: 'high', action: 'Verify within 2 hours', deadline: 'Before 14:00 WIB', coords: { lng: 114.25, lat: -2.73 }, hotspot: true, pm25: '115.6 ug/m3 nearby', evidence: ['High peatfr vulnerability forecast', 'Recent high-confidence FIRMS detection', 'Dry fire-weather conditions', 'Village 7 km downwind'], limitation: 'Water-table observation unavailable; soil-moisture proxy used.', status: 'Needs verification' },
-  { id: 'kubu-raya', place: 'Kubu Raya', region: 'Kalimantan Barat', priority: 'high', risk: 74, confidence: 64, confidenceBand: 'medium', action: 'Conduct preventive patrol today', deadline: 'Before 18:00 WIB', coords: { lng: 109.41, lat: -0.28 }, hotspot: true, pm25: '186.5 ug/m3 at Kubu Raya', evidence: ['Elevated peatfr vulnerability forecast', 'Cluster of two recent satellite detections', 'PM2.5 is very unhealthy', 'Road access within 4 km'], limitation: 'Wind field is a 6-hour forecast, not an observation.', status: 'Needs verification' },
-  { id: 'banjar', place: 'Banjar', region: 'Kalimantan Selatan', priority: 'watch', risk: 58, confidence: 55, confidenceBand: 'medium', action: 'Prepare downwind health advisory', deadline: 'Review at 16:00 WIB', coords: { lng: 114.72, lat: -3.44 }, hotspot: false, pm25: '25.1 ug/m3 at Banjarbaru', evidence: ['Moderate peatfr vulnerability forecast', 'Wind corridor points toward settlements', 'Historical burn pattern present'], limitation: 'No nearby water-table or PM2.5 observation.', status: 'Monitoring' },
-  { id: 'palangkaraya', place: 'Palangka Raya', region: 'Kalimantan Tengah', priority: 'high', risk: 69, confidence: 48, confidenceBand: 'low', action: 'Acquire observations before deployment', deadline: 'Next satellite pass', coords: { lng: 113.92, lat: -2.21 }, hotspot: true, pm25: '115.6 ug/m3 at Palangka Raya', evidence: ['High soil dryness proxy', 'Low-confidence satellite detection', 'Peat hydrological unit overlap', 'PM2.5 has risen in the last 6 hours'], limitation: 'Cloud-affected imagery and missing water-table data reduce confidence.', status: 'Monitoring' },
+  {
+    id: "pulang-pisau",
+    place: "Pulang Pisau",
+    region: "Kalimantan Tengah",
+    priority: "critical",
+    risk: 82,
+    confidence: 78,
+    confidenceBand: "high",
+    action: "Verify within 2 hours",
+    deadline: "Before 14:00 WIB",
+    coords: { lng: 114.25, lat: -2.73 },
+    hotspot: true,
+    pm25: "115.6 ug/m3 nearby",
+    evidence: [
+      "High peatfr vulnerability forecast",
+      "Recent high-confidence FIRMS detection",
+      "Dry fire-weather conditions",
+      "Village 7 km downwind",
+    ],
+    limitation:
+      "Water-table observation unavailable; soil-moisture proxy used.",
+    status: "Needs verification",
+  },
+  {
+    id: "kubu-raya",
+    place: "Kubu Raya",
+    region: "Kalimantan Barat",
+    priority: "high",
+    risk: 74,
+    confidence: 64,
+    confidenceBand: "medium",
+    action: "Conduct preventive patrol today",
+    deadline: "Before 18:00 WIB",
+    coords: { lng: 109.41, lat: -0.28 },
+    hotspot: true,
+    pm25: "186.5 ug/m3 at Kubu Raya",
+    evidence: [
+      "Elevated peatfr vulnerability forecast",
+      "Cluster of two recent satellite detections",
+      "PM2.5 is very unhealthy",
+      "Road access within 4 km",
+    ],
+    limitation: "Wind field is a 6-hour forecast, not an observation.",
+    status: "Needs verification",
+  },
+  {
+    id: "banjar",
+    place: "Banjar",
+    region: "Kalimantan Selatan",
+    priority: "watch",
+    risk: 58,
+    confidence: 55,
+    confidenceBand: "medium",
+    action: "Prepare downwind health advisory",
+    deadline: "Review at 16:00 WIB",
+    coords: { lng: 114.72, lat: -3.44 },
+    hotspot: false,
+    pm25: "25.1 ug/m3 at Banjarbaru",
+    evidence: [
+      "Moderate peatfr vulnerability forecast",
+      "Wind corridor points toward settlements",
+      "Historical burn pattern present",
+    ],
+    limitation: "No nearby water-table or PM2.5 observation.",
+    status: "Monitoring",
+  },
+  {
+    id: "palangkaraya",
+    place: "Palangka Raya",
+    region: "Kalimantan Tengah",
+    priority: "high",
+    risk: 69,
+    confidence: 48,
+    confidenceBand: "low",
+    action: "Acquire observations before deployment",
+    deadline: "Next satellite pass",
+    coords: { lng: 113.92, lat: -2.21 },
+    hotspot: true,
+    pm25: "115.6 ug/m3 at Palangka Raya",
+    evidence: [
+      "High soil dryness proxy",
+      "Low-confidence satellite detection",
+      "Peat hydrological unit overlap",
+      "PM2.5 has risen in the last 6 hours",
+    ],
+    limitation:
+      "Cloud-affected imagery and missing water-table data reduce confidence.",
+    status: "Monitoring",
+  },
 ];
-const priorityLabel: Record<Priority, string> = { critical: 'Critical', high: 'High', watch: 'Watch' };
+const priorityLabel: Record<Priority, string> = {
+  critical: "Critical",
+  high: "High",
+  watch: "Watch",
+};
 const evidenceDetails: Record<string, string> = {
-  'High peatfr vulnerability forecast': 'PFVI: 0.82 (high). Model: peatfr demo ensemble, 72-hour horizon. Water-table depth was not observed.',
-  'Recent high-confidence FIRMS detection': 'VIIRS confidence: high. Acquisition age: 3 hours. Live FIRMS key is not configured, so this is representative MVP data.',
-  'Dry fire-weather conditions': 'Rainfall: 1.8 mm in prior 24 hours. Temperature: 32.1 C. Wind: 13 km/h from SE.',
-  'Village 7 km downwind': 'Nearest mapped settlement: 7.0 km. Estimated downwind population exposure: 2,340 people.',
-  'Elevated peatfr vulnerability forecast': 'PFVI: 0.74 (high). Soil moisture proxy: 0.18 m3/m3.',
-  'Cluster of two recent satellite detections': '2 detections within 4.3 km over 6 hours. Confidence: high and nominal.',
-  'PM2.5 is very unhealthy': 'PM2.5: 186.5 ug/m3. Category: very unhealthy. Station: Kubu Raya.',
-  'Road access within 4 km': 'Nearest mapped road: 3.8 km. Nearest waterway: 1.2 km.',
-  'Moderate peatfr vulnerability forecast': 'PFVI: 0.58 (watch). Model uncertainty is wider than the critical incident.',
-  'Wind corridor points toward settlements': 'Forecast wind: 11 km/h from SE. Settlement intersection estimated in 6-12 hours.',
-  'Historical burn pattern present': 'Historical burn indicator: 3 events within 10 km during 2019-2025 reference period.',
-  'High soil dryness proxy': 'ERA5-Land soil moisture proxy: 0.16 m3/m3, 6th percentile for the seasonal baseline.',
-  'Low-confidence satellite detection': 'VIIRS confidence: nominal. Acquisition age: 5 hours. Requires verification.',
-  'Peat hydrological unit overlap': 'Incident point falls inside prototype peat hydrological-unit overlay.',
-  'PM2.5 has risen in the last 6 hours': 'PM2.5 change: +38.4 ug/m3 over 6 hours at Palangka Raya station.',
+  "High peatfr vulnerability forecast":
+    "PFVI: 0.82 (high). Model: peatfr demo ensemble, 72-hour horizon. Water-table depth was not observed.",
+  "Recent high-confidence FIRMS detection":
+    "VIIRS confidence: high. Acquisition age: 3 hours. Live FIRMS key is not configured, so this is representative MVP data.",
+  "Dry fire-weather conditions":
+    "Rainfall: 1.8 mm in prior 24 hours. Temperature: 32.1 C. Wind: 13 km/h from SE.",
+  "Village 7 km downwind":
+    "Nearest mapped settlement: 7.0 km. Estimated downwind population exposure: 2,340 people.",
+  "Elevated peatfr vulnerability forecast":
+    "PFVI: 0.74 (high). Soil moisture proxy: 0.18 m3/m3.",
+  "Cluster of two recent satellite detections":
+    "2 detections within 4.3 km over 6 hours. Confidence: high and nominal.",
+  "PM2.5 is very unhealthy":
+    "PM2.5: 186.5 ug/m3. Category: very unhealthy. Station: Kubu Raya.",
+  "Road access within 4 km":
+    "Nearest mapped road: 3.8 km. Nearest waterway: 1.2 km.",
+  "Moderate peatfr vulnerability forecast":
+    "PFVI: 0.58 (watch). Model uncertainty is wider than the critical incident.",
+  "Wind corridor points toward settlements":
+    "Forecast wind: 11 km/h from SE. Settlement intersection estimated in 6-12 hours.",
+  "Historical burn pattern present":
+    "Historical burn indicator: 3 events within 10 km during 2019-2025 reference period.",
+  "High soil dryness proxy":
+    "ERA5-Land soil moisture proxy: 0.16 m3/m3, 6th percentile for the seasonal baseline.",
+  "Low-confidence satellite detection":
+    "VIIRS confidence: nominal. Acquisition age: 5 hours. Requires verification.",
+  "Peat hydrological unit overlap":
+    "Incident point falls inside prototype peat hydrological-unit overlay.",
+  "PM2.5 has risen in the last 6 hours":
+    "PM2.5 change: +38.4 ug/m3 over 6 hours at Palangka Raya station.",
 };
 function evidenceExplanation(reason: string) {
-  if (reason.includes('FIRMS detection')) return `${reason}. Source: NASA FIRMS VIIRS S-NPP. Clusters group detections rounded to a 0.1 degree cell for this MVP.`;
-  if (reason.startsWith('VIIRS confidence:')) return `${reason}. FIRMS uses n for nominal confidence and h for high confidence. This value contributes to recommendation confidence, not proof of an active ground fire.`;
-  if (reason.startsWith('Fire radiative power:')) return `${reason}. FRP is satellite-estimated radiant energy in megawatts; it is an intensity signal, not burned area.`;
-  if (reason.startsWith('Acquired ')) return `${reason}. This is the detection timestamp reported by NASA FIRMS in UTC. The dashboard fetch time may be later.`;
-  return evidenceDetails[reason] ?? 'No additional interpretation is available for this input yet.';
+  if (reason.includes("FIRMS detection"))
+    return `${reason}. Source: NASA FIRMS VIIRS S-NPP. Clusters group detections rounded to a 0.1 degree cell for this MVP.`;
+  if (reason.startsWith("VIIRS confidence:"))
+    return `${reason}. FIRMS uses n for nominal confidence and h for high confidence. This value contributes to recommendation confidence, not proof of an active ground fire.`;
+  if (reason.startsWith("Fire radiative power:"))
+    return `${reason}. FRP is satellite-estimated radiant energy in megawatts; it is an intensity signal, not burned area.`;
+  if (reason.startsWith("Acquired "))
+    return `${reason}. This is the detection timestamp reported by NASA FIRMS in UTC. The dashboard fetch time may be later.`;
+  return (
+    evidenceDetails[reason] ??
+    "No additional interpretation is available for this input yet."
+  );
 }
-const distance = (value?: number | null, available = true) => !available ? 'Lookup unavailable' : value === null || value === undefined ? 'No mapped feature within 5 km' : `${value.toFixed(2)} km`;
+const distance = (value?: number | null, available = true) =>
+  !available
+    ? "Lookup unavailable"
+    : value === null || value === undefined
+      ? "No mapped feature within 5 km"
+      : `${value.toFixed(2)} km`;
 
 export default function Home() {
-  const [selectedId, setSelectedId] = useState('pulang-pisau');
-  const [filter, setFilter] = useState<'all' | Priority>('all');
-  const [horizon, setHorizon] = useState('72h');
-  const [layers, setLayers] = useState({ risk: true, hotspot: true, peat: true, wind: true, exposure: true, landcover: false });
+  const [selectedId, setSelectedId] = useState("pulang-pisau");
+  const [filter, setFilter] = useState<"all" | Priority>("all");
+  const [horizon, setHorizon] = useState("72h");
+  const [layers, setLayers] = useState({
+    risk: true,
+    hotspot: true,
+    peat: true,
+    wind: true,
+    exposure: true,
+    landcover: false,
+  });
   const [status, setStatus] = useState<Record<string, string>>({});
   const [expandedReason, setExpandedReason] = useState<string | null>(null);
   const [activeIncidents, setActiveIncidents] = useState(incidents);
-  const [feedStatus, setFeedStatus] = useState('Representative incidents; FIRMS key not configured.');
-  const [context, setContext] = useState<{ source: string; observedAt: string; weather: Record<string, number>; air: Record<string, number>; peat?: { inside: boolean; feature?: GeoJSON.Feature | null; source: string; url: string }; osm?: { available: boolean; roadKm: number | null; waterwayKm: number | null; settlementKm: number | null; facilityKm: number | null; source: string }; population?: { available: boolean; estimate: number | null; radiusKm: number; year: number; resolution: string; source: string; url: string }; readiness?: { peatfr: { rainfall: boolean; temperature: boolean; soilMoisture: boolean; waterTable: boolean }; worldCover: string; bmkg: string } } | null>(null);
-  const [satelliteStatus, setSatelliteStatus] = useState('Sentinel-1 catalogue loading; wetness proxy not computed');
+  const [feedStatus, setFeedStatus] = useState(
+    "Representative incidents; FIRMS key not configured.",
+  );
+  const [context, setContext] = useState<{
+    source: string;
+    observedAt: string;
+    weather: Record<string, number>;
+    air: Record<string, number>;
+    peat?: {
+      inside: boolean;
+      feature?: GeoJSON.Feature | null;
+      source: string;
+      url: string;
+    };
+    osm?: {
+      available: boolean;
+      roadKm: number | null;
+      waterwayKm: number | null;
+      settlementKm: number | null;
+      facilityKm: number | null;
+      source: string;
+    };
+    population?: {
+      available: boolean;
+      estimate: number | null;
+      radiusKm: number;
+      year: number;
+      resolution: string;
+      source: string;
+      url: string;
+    };
+    readiness?: {
+      peatfr: {
+        rainfall: boolean;
+        temperature: boolean;
+        soilMoisture: boolean;
+        waterTable: boolean;
+      };
+      worldCover: string;
+      bmkg: string;
+    };
+  } | null>(null);
+  const [satelliteStatus, setSatelliteStatus] = useState(
+    "Sentinel-1 catalogue loading; wetness proxy not computed",
+  );
+  const [hydrology, setHydrology] = useState<{
+    available: boolean;
+    nearest?: {
+      depthM: number;
+      distanceKm: number;
+      observedAt: string;
+      source: string;
+    };
+    fresh?: boolean;
+    reason?: string;
+  } | null>(null);
+  const [landcover, setLandcover] = useState<{
+    available: boolean;
+    dominant?: string;
+    composition?: {
+      treeCoverPct: number;
+      croplandPct: number;
+      builtUpPct: number;
+      wetlandPct: number;
+      mangrovePct: number;
+    };
+    source: string;
+    url: string;
+    samplePixels?: number;
+    reason?: string;
+  } | null>(null);
   const queueItems = useRef<Record<string, HTMLButtonElement | null>>({});
-  useEffect(() => { fetch('/api/firms').then((response) => response.json()).then((data) => { setFeedStatus(data.message); if (data.mode === 'live' && data.incidents?.length) { setActiveIncidents(data.incidents); setSelectedId(data.incidents[0].id); } }).catch(() => setFeedStatus('FIRMS feed unavailable; representative incidents remain visible.')); }, []);
-  const selected = activeIncidents.find((incident) => incident.id === selectedId) ?? activeIncidents[0];
-  const visibleIncidents = activeIncidents.filter((incident) => filter === 'all' || incident.priority === filter);
-  useEffect(() => { requestAnimationFrame(() => queueItems.current[selectedId]?.scrollIntoView({ behavior: 'smooth', block: 'center' })); }, [selectedId, visibleIncidents.length]);
-  useEffect(() => { setContext(null); fetch(`/api/context?lat=${selected.coords.lat}&lng=${selected.coords.lng}`).then((response) => response.ok ? response.json() : null).then(setContext).catch(() => setContext(null)); }, [selected.coords.lat, selected.coords.lng]);
-  useEffect(() => { fetch(`/api/satellite?lat=${selected.coords.lat}&lng=${selected.coords.lng}`).then((response) => response.json()).then((data) => setSatelliteStatus(data.available ? `Sentinel-1 scene: ${data.acquisition}; wetness proxy not computed` : 'Sentinel-1 catalogue unavailable; wetness proxy not computed')).catch(() => setSatelliteStatus('Sentinel-1 catalogue unavailable; wetness proxy not computed')); }, [selected.coords.lat, selected.coords.lng]);
-  const updateStatus = (value: string) => setStatus((previous) => ({ ...previous, [selected.id]: value }));
-  return <main className="app-shell">
-    <header className="topbar"><div className="brand"><span className="brand-mark">JR</span><span>JagaRawa</span><small>Operations MVP</small></div><div className="center-status"><span className="pulse" /> {feedStatus} </div><button className="health-button" onClick={() => alert(feedStatus)}>Data health</button></header>
-    <section className="controlbar" aria-label="Map controls"><div className="horizon-tabs">{['Now', '24h', '72h'].map((item) => <button key={item} className={horizon === item ? 'active' : ''} onClick={() => setHorizon(item)}>{item}</button>)}</div><span className="control-caption">Forecast horizon: {horizon}</span><div className="filter-group"><span>Priority</span>{(['all', 'critical', 'high', 'watch'] as const).map((item) => <button key={item} className={filter === item ? 'selected' : ''} onClick={() => setFilter(item)}>{item === 'all' ? 'All' : priorityLabel[item]}</button>)}</div></section>
-    <section className="data-truth" aria-label="Data status"><b>Data status</b><span className="truth-live">LIVE: FIRMS when configured, weather, PM2.5, and KHG lookup</span><span className="truth-proxy">PROXY: surface soil moisture and WorldCover visual layer</span><span className="truth-satellite">SATELLITE: {satelliteStatus}</span><span className="truth-dummy">DUMMY / PENDING: PeatFR forecast, wind overlay, exposure score, and any queue shown when FIRMS is unavailable</span></section>
-    <section className="workspace">
-      <aside className="queue-panel"><div className="panel-heading"><div><p className="eyebrow">Priority queue</p><h1>What needs attention</h1></div><span>{visibleIncidents.length} items</span></div><p className="queue-note">Ranked by risk, confidence, exposure, and action deadline.</p><div className="incident-list">{visibleIncidents.map((incident) => <button ref={(element) => { queueItems.current[incident.id] = element; }} key={incident.id} className={`incident-card ${selected.id === incident.id ? 'is-selected' : ''}`} onClick={() => setSelectedId(incident.id)}><span className={`priority-dot ${incident.priority}`} /><span className="incident-card-copy"><strong>{priorityLabel[incident.priority]} <em>{incident.risk}%</em></strong><b>{incident.place}</b><small>{status[incident.id] ?? incident.action}</small></span><span className={`confidence-pill ${incident.confidenceBand}`}>{incident.confidenceBand}</span></button>)}</div><div className="legend"><span><i className="priority-dot critical" />Critical</span><span><i className="priority-dot high" />High</span><span><i className="priority-dot watch" />Watch</span></div></aside>
-      <section className="map-panel" aria-label="Central Kalimantan risk map"><div className="map-toolbar"><strong>Central Kalimantan / Kalimantan context</strong><span>{context?.population?.available && context.population.estimate !== null ? `${Math.round(context.population.estimate).toLocaleString()} people within ${context.population.radiusKm} km` : 'Zoom and pan enabled'}</span></div><OperationsMap incidents={activeIncidents} selectedId={selected.id} onSelect={setSelectedId} layers={layers} peatFeature={context?.peat?.feature} /><div className="layer-bar">{(['hotspot', 'peat', 'wind', 'landcover'] as const).map((key) => <button key={key} className={layers[key] ? 'layer-on' : ''} onClick={() => setLayers((current) => ({ ...current, [key]: !current[key] }))}>{layers[key] ? 'Hide' : 'Show'} {key}</button>)}<span className="layer-pending">WorldCover is visual context only. Risk and exposure scoring remain pending.</span></div></section>
-      <aside className="detail-panel"><div className="panel-heading"><div><p className="eyebrow">Selected incident</p><h2>{selected.place}</h2><span>{selected.region}</span></div><span className={`priority-badge ${selected.priority}`}>{priorityLabel[selected.priority]}</span></div><div className="score-row"><div><span>Risk</span><strong>{selected.risk}%</strong><small>next {horizon}</small></div><div><span>Confidence</span><strong>{selected.confidence}%</strong><small className={selected.confidenceBand}>{selected.confidenceBand}</small></div></div><div className="action-box"><p>Recommended action</p><strong>{selected.action}</strong><span>{selected.deadline}</span></div><section className="evidence"><h3>Why this is ranked</h3>{selected.evidence.map((item) => <div key={item}><button className="evidence-button" onClick={() => setExpandedReason(expandedReason === item ? null : item)}><i />{item}<b>{expandedReason === item ? 'Hide' : 'Inspect'}</b></button>{expandedReason === item && <div className="evidence-detail">{evidenceExplanation(item)}</div>}</div>)}</section><details className="parameter-panel"><summary>All inputs, sources, and data quality</summary><div className="parameter-table">{context ? <><div><span>Official peat/KHG intersection</span><b>{context.peat?.inside ? 'Inside mapped KHG' : 'No KHG intersection'}</b><small>{context.peat ? <a href={context.peat.url} target="_blank" rel="noreferrer">{context.peat.source}</a> : 'BIG lookup loading'} · coordinate query</small></div><div><span>Nearest settlement</span><b>{distance(context.osm?.settlementKm, context.osm?.available)}</b><small><a href={context.osm?.url ?? 'https://www.openstreetmap.org/'} target="_blank" rel="noreferrer">{context.osm?.source ?? 'Local OSM index'}</a> · sampled mapped village, town, or city</small></div><div><span>Nearest public facility</span><b>{distance(context.osm?.facilityKm, context.osm?.available)}</b><small><a href={context.osm?.url ?? 'https://www.openstreetmap.org/'} target="_blank" rel="noreferrer">{context.osm?.source ?? 'Local OSM index'}</a> · sampled school, clinic, or hospital</small></div><div><span>Nearest road / waterway</span><b>{distance(context.osm?.roadKm, context.osm?.available)} / {distance(context.osm?.waterwayKm, context.osm?.available)}</b><small><a href={context.osm?.url ?? 'https://www.openstreetmap.org/'} target="_blank" rel="noreferrer">{context.osm?.source ?? 'Local OSM index'}</a> · sampled geometry; not routing distance</small></div><div><span>Population within 5 km</span><b>{context.population?.available && context.population.estimate !== null ? `${Math.round(context.population.estimate).toLocaleString()} people` : 'Unavailable'}</b><small><a href={context.population?.url ?? 'https://hub.worldpop.org/project/categories?id=3'} target="_blank" rel="noreferrer">{context.population?.source ?? 'Local WorldPop index'}</a> · approximate local raster aggregation</small></div><div><span>Live temperature</span><b>{context.weather.temperature_2m} C</b><small><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · {context.observedAt} UTC</small></div><div><span>Live wind</span><b>{context.weather.wind_speed_10m} km/h</b><small><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · direction {context.weather.wind_direction_10m} degrees</small></div><div><span>Live precipitation</span><b>{context.weather.precipitation} mm</b><small><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · current observation</small></div><div><span>Live soil moisture proxy</span><b>{context.weather.soil_moisture_0_to_1cm ?? 'Unavailable'}{context.weather.soil_moisture_0_to_1cm !== undefined ? ' m3/m3' : ''}</b><small><a href="https://open-meteo.com/" target="_blank" rel="noreferrer">Open-Meteo</a> · surface moisture, not a peat water-table sensor</small></div><div><span>Live PM2.5</span><b>{context.air.pm2_5} ug/m3</b><small><a href="https://open-meteo.com/en/docs/air-quality-api" target="_blank" rel="noreferrer">Open-Meteo Air Quality</a> · current estimate</small></div><div><span>Peatfr readiness</span><b>{context.readiness?.peatfr.waterTable ? 'Ready' : 'Water table missing'}</b><small>Rainfall, temperature, and soil moisture proxy available; local water-table data is still required.</small></div><div><span>Land cover / BMKG</span><b>Not integrated</b><small>ESA WorldCover and an accessible BMKG feed are next-stage sources, not current inputs.</small></div></> : <div><span>Live incident context</span><b>Loading</b><small>Weather, air quality, peat/KHG, local OSM, and WorldPop lookup</small></div>}</div></details><div className="limit-box"><strong>Confidence limitation</strong><span>{selected.limitation}</span></div><div className="air-readout"><span>Air quality context</span><b>{context ? `${context.air.pm2_5} ug/m3 live estimate` : selected.pm25}</b></div><div className="field-actions"><p>Field feedback</p><div><button onClick={() => updateStatus('Verified fire')}>Verified fire</button><button onClick={() => updateStatus('False alarm')}>False alarm</button><button onClick={() => updateStatus('Monitoring')}>Monitor</button></div></div></aside>
-    </section><footer><span><b>PROTOTYPE</b> Live sources are labeled; unintegrated inputs remain explicitly pending.</span><span>Every recommendation requires human verification.</span></footer>
-  </main>;
+  useEffect(() => {
+    fetch("/api/firms")
+      .then((response) => response.json())
+      .then((data) => {
+        setFeedStatus(data.message);
+        if (data.mode === "live" && data.incidents?.length) {
+          setActiveIncidents(data.incidents);
+          setSelectedId(data.incidents[0].id);
+        }
+      })
+      .catch(() =>
+        setFeedStatus(
+          "FIRMS feed unavailable; representative incidents remain visible.",
+        ),
+      );
+  }, []);
+  const selected =
+    activeIncidents.find((incident) => incident.id === selectedId) ??
+    activeIncidents[0];
+  const visibleIncidents = activeIncidents.filter(
+    (incident) => filter === "all" || incident.priority === filter,
+  );
+  useEffect(() => {
+    requestAnimationFrame(() =>
+      queueItems.current[selectedId]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      }),
+    );
+  }, [selectedId, visibleIncidents.length]);
+  useEffect(() => {
+    fetch(`/api/context?lat=${selected.coords.lat}&lng=${selected.coords.lng}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then(setContext)
+      .catch(() => setContext(null));
+  }, [selected.coords.lat, selected.coords.lng]);
+  useEffect(() => {
+    fetch(
+      `/api/satellite?lat=${selected.coords.lat}&lng=${selected.coords.lng}`,
+    )
+      .then((response) => response.json())
+      .then((data) =>
+        setSatelliteStatus(
+          data.pairAvailable
+            ? `Sentinel-1 pair ready: ${data.latest?.acquisition}; pixel wetness pending calibration`
+            : data.available
+              ? "One Sentinel-1 scene available; comparison pair pending"
+              : "Sentinel-1 catalogue unavailable; wetness proxy not computed",
+        ),
+      )
+      .catch(() =>
+        setSatelliteStatus(
+          "Sentinel-1 catalogue unavailable; wetness proxy not computed",
+        ),
+      );
+  }, [selected.coords.lat, selected.coords.lng]);
+  useEffect(() => {
+    fetch(
+      `/api/hydrology?lat=${selected.coords.lat}&lng=${selected.coords.lng}`,
+    )
+      .then((response) => response.json())
+      .then(setHydrology)
+      .catch(() => setHydrology(null));
+    fetch(
+      `/api/landcover?lat=${selected.coords.lat}&lng=${selected.coords.lng}`,
+    )
+      .then((response) => response.json())
+      .then(setLandcover)
+      .catch(() => setLandcover(null));
+  }, [selected.coords.lat, selected.coords.lng]);
+  const updateStatus = (value: string) =>
+    setStatus((previous) => ({ ...previous, [selected.id]: value }));
+  return (
+    <main className="app-shell">
+      <header className="topbar">
+        <div className="brand">
+          <span className="brand-mark">JR</span>
+          <span>JagaRawa</span>
+          <small>Operations MVP</small>
+        </div>
+        <div className="center-status">
+          <span className="pulse" /> {feedStatus}{" "}
+        </div>
+        <button className="health-button" onClick={() => alert(feedStatus)}>
+          Data health
+        </button>
+      </header>
+      <section className="controlbar" aria-label="Map controls">
+        <div className="horizon-tabs">
+          {["Now", "24h", "72h"].map((item) => (
+            <button
+              key={item}
+              className={horizon === item ? "active" : ""}
+              onClick={() => setHorizon(item)}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+        <span className="control-caption">Forecast horizon: {horizon}</span>
+        <div className="filter-group">
+          <span>Priority</span>
+          {(["all", "critical", "high", "watch"] as const).map((item) => (
+            <button
+              key={item}
+              className={filter === item ? "selected" : ""}
+              onClick={() => setFilter(item)}
+            >
+              {item === "all" ? "All" : priorityLabel[item]}
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="data-truth" aria-label="Data status">
+        <b>Data status</b>
+        <span className="truth-live">
+          LIVE: FIRMS when configured, weather, PM2.5, KHG, and WorldCover
+          land-cover context
+        </span>
+        <span className="truth-proxy">
+          PROXY: surface soil moisture; water table is{" "}
+          {hydrology?.available ? "sensor-fed" : "not observed"}
+        </span>
+        <span className="truth-satellite">SATELLITE: {satelliteStatus}</span>
+        <span className="truth-dummy">
+          DUMMY / PENDING: PeatFR forecast, SAR pixel wetness, wind overlay,
+          exposure score, and any queue shown when FIRMS is unavailable
+        </span>
+      </section>
+      <section className="workspace">
+        <aside className="queue-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Priority queue</p>
+              <h1>What needs attention</h1>
+            </div>
+            <span>{visibleIncidents.length} items</span>
+          </div>
+          <p className="queue-note">
+            Ranked by risk, confidence, exposure, and action deadline.
+          </p>
+          <div className="incident-list">
+            {visibleIncidents.map((incident) => (
+              <button
+                ref={(element) => {
+                  queueItems.current[incident.id] = element;
+                }}
+                key={incident.id}
+                className={`incident-card ${selected.id === incident.id ? "is-selected" : ""}`}
+                onClick={() => setSelectedId(incident.id)}
+              >
+                <span className={`priority-dot ${incident.priority}`} />
+                <span className="incident-card-copy">
+                  <strong>
+                    {priorityLabel[incident.priority]} <em>{incident.risk}%</em>
+                  </strong>
+                  <b>{incident.place}</b>
+                  <small>{status[incident.id] ?? incident.action}</small>
+                </span>
+                <span className={`confidence-pill ${incident.confidenceBand}`}>
+                  {incident.confidenceBand}
+                </span>
+              </button>
+            ))}
+          </div>
+          <div className="legend">
+            <span>
+              <i className="priority-dot critical" />
+              Critical
+            </span>
+            <span>
+              <i className="priority-dot high" />
+              High
+            </span>
+            <span>
+              <i className="priority-dot watch" />
+              Watch
+            </span>
+          </div>
+        </aside>
+        <section className="map-panel" aria-label="Central Kalimantan risk map">
+          <div className="map-toolbar">
+            <strong>Central Kalimantan / Kalimantan context</strong>
+            <span>
+              {context?.population?.available &&
+              context.population.estimate !== null
+                ? `${Math.round(context.population.estimate).toLocaleString()} people within ${context.population.radiusKm} km`
+                : "Zoom and pan enabled"}
+            </span>
+          </div>
+          <OperationsMap
+            incidents={activeIncidents}
+            selectedId={selected.id}
+            onSelect={setSelectedId}
+            layers={layers}
+            peatFeature={context?.peat?.feature}
+          />
+          <div className="layer-bar">
+            {(["hotspot", "peat", "wind", "landcover"] as const).map((key) => (
+              <button
+                key={key}
+                className={layers[key] ? "layer-on" : ""}
+                onClick={() =>
+                  setLayers((current) => ({ ...current, [key]: !current[key] }))
+                }
+              >
+                {layers[key] ? "Hide" : "Show"} {key}
+              </button>
+            ))}
+            <span className="layer-pending">
+              WorldCover is live land-cover context only. It is not yet part of
+              risk or exposure scoring.
+            </span>
+          </div>
+        </section>
+        <aside className="detail-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Selected incident</p>
+              <h2>{selected.place}</h2>
+              <span>{selected.region}</span>
+            </div>
+            <span className={`priority-badge ${selected.priority}`}>
+              {priorityLabel[selected.priority]}
+            </span>
+          </div>
+          <div className="score-row">
+            <div>
+              <span>Risk</span>
+              <strong>{selected.risk}%</strong>
+              <small>next {horizon}</small>
+            </div>
+            <div>
+              <span>Confidence</span>
+              <strong>{selected.confidence}%</strong>
+              <small className={selected.confidenceBand}>
+                {selected.confidenceBand}
+              </small>
+            </div>
+          </div>
+          <div className="action-box">
+            <p>Recommended action</p>
+            <strong>{selected.action}</strong>
+            <span>{selected.deadline}</span>
+          </div>
+          <section className="evidence">
+            <h3>Why this is ranked</h3>
+            {selected.evidence.map((item) => (
+              <div key={item}>
+                <button
+                  className="evidence-button"
+                  onClick={() =>
+                    setExpandedReason(expandedReason === item ? null : item)
+                  }
+                >
+                  <i />
+                  {item}
+                  <b>{expandedReason === item ? "Hide" : "Inspect"}</b>
+                </button>
+                {expandedReason === item && (
+                  <div className="evidence-detail">
+                    {evidenceExplanation(item)}
+                  </div>
+                )}
+              </div>
+            ))}
+          </section>
+          <details className="parameter-panel">
+            <summary>All inputs, sources, and data quality</summary>
+            <div className="parameter-table">
+              {context ? (
+                <>
+                  <div>
+                    <span>Official peat/KHG intersection</span>
+                    <b>
+                      {context.peat?.inside
+                        ? "Inside mapped KHG"
+                        : "No KHG intersection"}
+                    </b>
+                    <small>
+                      {context.peat ? (
+                        <a
+                          href={context.peat.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {context.peat.source}
+                        </a>
+                      ) : (
+                        "BIG lookup loading"
+                      )}{" "}
+                      · coordinate query
+                    </small>
+                  </div>
+                  <div>
+                    <span>Nearest settlement</span>
+                    <b>
+                      {distance(
+                        context.osm?.settlementKm,
+                        context.osm?.available,
+                      )}
+                    </b>
+                    <small>
+                      <a
+                        href={
+                          context.osm?.url ?? "https://www.openstreetmap.org/"
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {context.osm?.source ?? "Local OSM index"}
+                      </a>{" "}
+                      · sampled mapped village, town, or city
+                    </small>
+                  </div>
+                  <div>
+                    <span>Nearest public facility</span>
+                    <b>
+                      {distance(
+                        context.osm?.facilityKm,
+                        context.osm?.available,
+                      )}
+                    </b>
+                    <small>
+                      <a
+                        href={
+                          context.osm?.url ?? "https://www.openstreetmap.org/"
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {context.osm?.source ?? "Local OSM index"}
+                      </a>{" "}
+                      · sampled school, clinic, or hospital
+                    </small>
+                  </div>
+                  <div>
+                    <span>Nearest road / waterway</span>
+                    <b>
+                      {distance(context.osm?.roadKm, context.osm?.available)} /{" "}
+                      {distance(
+                        context.osm?.waterwayKm,
+                        context.osm?.available,
+                      )}
+                    </b>
+                    <small>
+                      <a
+                        href={
+                          context.osm?.url ?? "https://www.openstreetmap.org/"
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {context.osm?.source ?? "Local OSM index"}
+                      </a>{" "}
+                      · sampled geometry; not routing distance
+                    </small>
+                  </div>
+                  <div>
+                    <span>Population within 5 km</span>
+                    <b>
+                      {context.population?.available &&
+                      context.population.estimate !== null
+                        ? `${Math.round(context.population.estimate).toLocaleString()} people`
+                        : "Unavailable"}
+                    </b>
+                    <small>
+                      <a
+                        href={
+                          context.population?.url ??
+                          "https://hub.worldpop.org/project/categories?id=3"
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {context.population?.source ?? "Local WorldPop index"}
+                      </a>{" "}
+                      · approximate local raster aggregation
+                    </small>
+                  </div>
+                  <div>
+                    <span>Live temperature</span>
+                    <b>{context.weather.temperature_2m} C</b>
+                    <small>
+                      <a
+                        href="https://open-meteo.com/"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open-Meteo
+                      </a>{" "}
+                      · {context.observedAt} UTC
+                    </small>
+                  </div>
+                  <div>
+                    <span>Live wind</span>
+                    <b>{context.weather.wind_speed_10m} km/h</b>
+                    <small>
+                      <a
+                        href="https://open-meteo.com/"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open-Meteo
+                      </a>{" "}
+                      · direction {context.weather.wind_direction_10m} degrees
+                    </small>
+                  </div>
+                  <div>
+                    <span>Live precipitation</span>
+                    <b>{context.weather.precipitation} mm</b>
+                    <small>
+                      <a
+                        href="https://open-meteo.com/"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open-Meteo
+                      </a>{" "}
+                      · current observation
+                    </small>
+                  </div>
+                  <div>
+                    <span>Live soil moisture proxy</span>
+                    <b>
+                      {context.weather.soil_moisture_0_to_1cm ?? "Unavailable"}
+                      {context.weather.soil_moisture_0_to_1cm !== undefined
+                        ? " m3/m3"
+                        : ""}
+                    </b>
+                    <small>
+                      <a
+                        href="https://open-meteo.com/"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open-Meteo
+                      </a>{" "}
+                      · surface moisture, not a peat water-table sensor
+                    </small>
+                  </div>
+                  <div>
+                    <span>Live PM2.5</span>
+                    <b>{context.air.pm2_5} ug/m3</b>
+                    <small>
+                      <a
+                        href="https://open-meteo.com/en/docs/air-quality-api"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Open-Meteo Air Quality
+                      </a>{" "}
+                      · current estimate
+                    </small>
+                  </div>
+                  <div>
+                    <span>Water-table depth</span>
+                    <b>
+                      {hydrology?.available && hydrology.nearest
+                        ? `${hydrology.nearest.depthM.toFixed(2)} m`
+                        : "Not observed"}
+                    </b>
+                    <small>
+                      {hydrology?.available && hydrology.nearest
+                        ? `${hydrology.fresh ? "Fresh verified" : "Stale or unverified"} sensor feed, ${hydrology.nearest.distanceKm.toFixed(1)} km away; ${hydrology.nearest.observedAt}`
+                        : (hydrology?.reason ??
+                          "No local sensor feed configured. Historical research data is validation-only.")}
+                    </small>
+                  </div>
+                  <div>
+                    <span>Peatfr readiness</span>
+                    <b>
+                      {context.readiness?.peatfr.waterTable && hydrology?.fresh
+                        ? "Ready"
+                        : "Water table missing"}
+                    </b>
+                    <small>
+                      Rainfall, temperature, and soil-moisture proxy are
+                      available. A fresh verified water-table observation is
+                      still required.
+                    </small>
+                  </div>
+                  <div>
+                    <span>ESA land cover, 5 km sample</span>
+                    <b>
+                      {landcover?.available
+                        ? landcover.dominant
+                        : "Unavailable"}
+                    </b>
+                    <small>
+                      {landcover?.available && landcover.composition ? (
+                        <a
+                          href={landcover.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {landcover.source}:{" "}
+                          {landcover.composition.treeCoverPct}% tree,{" "}
+                          {landcover.composition.wetlandPct}% wetland,{" "}
+                          {landcover.composition.croplandPct}% cropland,{" "}
+                          {landcover.composition.builtUpPct}% built-up
+                        </a>
+                      ) : (
+                        (landcover?.reason ??
+                        "Loading public WorldCover COG sample")
+                      )}
+                    </small>
+                  </div>
+                  <div>
+                    <span>BMKG</span>
+                    <b>Not integrated</b>
+                    <small>
+                      An accessible, attributable BMKG feed is still required
+                      for official operational validation.
+                    </small>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <span>Live incident context</span>
+                  <b>Loading</b>
+                  <small>
+                    Weather, air quality, peat/KHG, local OSM, and WorldPop
+                    lookup
+                  </small>
+                </div>
+              )}
+            </div>
+          </details>
+          <div className="limit-box">
+            <strong>Confidence limitation</strong>
+            <span>{selected.limitation}</span>
+          </div>
+          <div className="air-readout">
+            <span>Air quality context</span>
+            <b>
+              {context
+                ? `${context.air.pm2_5} ug/m3 live estimate`
+                : selected.pm25}
+            </b>
+          </div>
+          <div className="field-actions">
+            <p>Field feedback</p>
+            <div>
+              <button onClick={() => updateStatus("Verified fire")}>
+                Verified fire
+              </button>
+              <button onClick={() => updateStatus("False alarm")}>
+                False alarm
+              </button>
+              <button onClick={() => updateStatus("Monitoring")}>
+                Monitor
+              </button>
+            </div>
+          </div>
+        </aside>
+      </section>
+      <footer>
+        <span>
+          <b>PROTOTYPE</b> Live sources are labeled; unintegrated inputs remain
+          explicitly pending.
+        </span>
+        <span>Every recommendation requires human verification.</span>
+      </footer>
+    </main>
+  );
 }

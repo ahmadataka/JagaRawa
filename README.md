@@ -53,13 +53,14 @@ Every displayed value must retain its original source, source timestamp, retriev
 | [SiPongi+](https://sipongi.gakkum.kehutanan.go.id/) | Indonesian hotspot, fire-area and emissions context | **Not integrated** | Official operational cross-check | Use an approved download/API; do not scrape unsupported services. |
 | [GPM IMERG](https://gpm.nasa.gov/data/imerg) | Satellite precipitation | **Not integrated** | Rainfall fallback and validation | Satellite rainfall is not a local rain gauge. |
 | [ERA5-Land](https://cds.climate.copernicus.eu/datasets/reanalysis-era5-land) | Historical temperature, precipitation and soil variables | **Not integrated** | Backfill and historical model training | Reanalysis is not a substitute for local sensors. |
-| [ESA WorldCover](https://esa-worldcover.org/en/data-access) | 2021 land-cover map | **Visual map overlay** | Operator geographic context | Public WMS imagery is not suitable for numeric analysis; a COG-processing worker is needed for fuel/land-use features. |
-| [Copernicus Data Space Sentinel-1 catalogue](https://dataspace.copernicus.eu/) | Latest scene metadata intersecting each incident | **Live catalogue metadata** | Shows satellite availability for a future wetness-proxy workflow | This does not download or analyse imagery. The dashboard explicitly labels the wetness proxy as not computed. |
+| [ESA WorldCover 2021 v200](https://esa-worldcover.org/en/data-access) | 10 m land-cover classes sampled around the selected incident | **Live public COG sample** | Dominant cover plus tree, wetland, cropland, water and built-up composition context | A 2021 baseline sampled over a 5 km bounding box. It is not current fuel moisture, exact area, or a risk-score feature. |
+| [Copernicus Data Space Sentinel-1 STAC catalogue](https://stac.dataspace.copernicus.eu/v1/) | Up to two recent GRD scene metadata records intersecting each incident | **Live catalogue metadata** | Shows whether a comparison pair exists for a future wetness workflow | This does not download or analyse SAR pixels. The dashboard explicitly labels the wetness proxy as not computed. |
 | [WorldPop Global 2 Indonesia 2025](https://hub.worldpop.org/project/categories?id=3), DOI `10.5258/SOTON/WP00840` | 1 km constrained population raster, locally aggregated to estimate people within 5 km | **Integrated locally after running the builder** | Population exposure context | Uses 0.05 degree aggregate cells and cell-centre inclusion, so it is an approximate exposure estimate, not a live evacuation count or exact zonal statistic. |
 | Historical FIRMS / validated burned-area and field feedback | Past events and confirmed outcomes | **Not integrated** | Training, calibration, and evaluation | Field confirmation is the strongest outcome label. |
 
 The detailed input contract and attribution notes are maintained in [docs/data-sources.md](docs/data-sources.md).
 The reproducible local OSM and WorldPop build procedure is in [docs/local-exposure-data.md](docs/local-exposure-data.md).
+The satellite, land-cover, and water-table stage limits are in [docs/satellite-and-landcover.md](docs/satellite-and-landcover.md).
 
 ## Classification And Confidence Formulas
 
