@@ -273,6 +273,19 @@ export default function Home() {
     limitations?: string;
     reason?: string;
   } | null>(null);
+  const [dispatch, setDispatch] = useState<{
+    available: boolean;
+    candidate?: {
+      name: string;
+      proximityKm: number;
+      availability: number;
+      capabilities: string;
+      updatedAt: string;
+    };
+    availableResources?: number;
+    recommendation?: string;
+    reason?: string;
+  } | null>(null);
   const queueItems = useRef<Record<string, HTMLButtonElement | null>>({});
   useEffect(() => {
     fetch("/api/firms")
@@ -350,6 +363,12 @@ export default function Home() {
       .then(setHistorical)
       .catch(() => setHistorical(null));
   }, [selected.region]);
+  useEffect(() => {
+    fetch(`/api/dispatch?lat=${selected.coords.lat}&lng=${selected.coords.lng}`)
+      .then((response) => response.json())
+      .then(setDispatch)
+      .catch(() => setDispatch(null));
+  }, [selected.coords.lat, selected.coords.lng]);
   const updateStatus = (value: string) =>
     setStatus((previous) => ({ ...previous, [selected.id]: value }));
   return (
@@ -767,6 +786,20 @@ export default function Home() {
                         (historical?.reason ??
                         "Loading GWIS historical baseline")
                       )}
+                    </small>
+                  </div>
+                  <div>
+                    <span>Response capacity</span>
+                    <b>
+                      {dispatch?.available && dispatch.candidate
+                        ? `${dispatch.candidate.name} (${dispatch.candidate.proximityKm.toFixed(1)} km)`
+                        : "Not configured"}
+                    </b>
+                    <small>
+                      {dispatch?.available && dispatch.candidate
+                        ? `${dispatch.availableResources} verified available unit(s); ${dispatch.candidate.availability} available; ${dispatch.candidate.capabilities}. ${dispatch.recommendation}`
+                        : (dispatch?.reason ??
+                          "No roster has been provided. Do not infer crew or equipment availability.")}
                     </small>
                   </div>
                   <div>

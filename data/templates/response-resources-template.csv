@@ -1,0 +1,2 @@
+resource_id,name,latitude,longitude,status,availability,capabilities,updated_at,source,quality_flag
+# Do not add fictional crews. Use status available|committed|offline, availability as a non-negative integer, and quality_flag verified only after operational confirmation.
