@@ -56,11 +56,13 @@ Every displayed value must retain its original source, source timestamp, retriev
 | [ESA WorldCover 2021 v200](https://esa-worldcover.org/en/data-access) | 10 m land-cover classes sampled around the selected incident | **Live public COG sample** | Dominant cover plus tree, wetland, cropland, water and built-up composition context | A 2021 baseline sampled over a 5 km bounding box. It is not current fuel moisture, exact area, or a risk-score feature. |
 | [Copernicus Data Space Sentinel-1 STAC catalogue](https://stac.dataspace.copernicus.eu/v1/) | Up to two recent GRD scene metadata records intersecting each incident | **Live catalogue metadata** | Shows whether a comparison pair exists for a future wetness workflow | This does not download or analyse SAR pixels. The dashboard explicitly labels the wetness proxy as not computed. |
 | [WorldPop Global 2 Indonesia 2025](https://hub.worldpop.org/project/categories?id=3), DOI `10.5258/SOTON/WP00840` | 1 km constrained population raster, locally aggregated to estimate people within 5 km | **Integrated locally after running the builder** | Population exposure context | Uses 0.05 degree aggregate cells and cell-centre inclusion, so it is an approximate exposure estimate, not a live evacuation count or exact zonal statistic. |
+| [GWIS Global Monthly Burned Area](https://gwis.jrc.ec.europa.eu/apps/country.profile/downloads), MCD64A1-derived | Monthly province-level burned hectares across land-cover classes, 2002-2024 | **Integrated locally after running the builder** | Historical seasonal burned-area baseline for Kalimantan provinces | Province-month aggregate only. It is not a 5 km burned-area label, a fire probability, or a current risk-score input. |
 | Historical FIRMS / validated burned-area and field feedback | Past events and confirmed outcomes | **Not integrated** | Training, calibration, and evaluation | Field confirmation is the strongest outcome label. |
 
 The detailed input contract and attribution notes are maintained in [docs/data-sources.md](docs/data-sources.md).
 The reproducible local OSM and WorldPop build procedure is in [docs/local-exposure-data.md](docs/local-exposure-data.md).
 The satellite, land-cover, and water-table stage limits are in [docs/satellite-and-landcover.md](docs/satellite-and-landcover.md).
+The historical baseline and the required path to valid spatial calibration are in [docs/historical-calibration.md](docs/historical-calibration.md).
 
 ## Classification And Confidence Formulas
 

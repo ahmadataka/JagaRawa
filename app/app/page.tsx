@@ -258,6 +258,21 @@ export default function Home() {
     samplePixels?: number;
     reason?: string;
   } | null>(null);
+  const [historical, setHistorical] = useState<{
+    available: boolean;
+    region?: string;
+    month?: number;
+    summary?: {
+      medianHa: number;
+      p75Ha: number;
+      yearsWithBurn: number;
+      years: number;
+      seasonality: string;
+    };
+    source?: { name: string; url: string; coverage: string };
+    limitations?: string;
+    reason?: string;
+  } | null>(null);
   const queueItems = useRef<Record<string, HTMLButtonElement | null>>({});
   useEffect(() => {
     fetch("/api/firms")
@@ -329,6 +344,12 @@ export default function Home() {
       .then(setLandcover)
       .catch(() => setLandcover(null));
   }, [selected.coords.lat, selected.coords.lng]);
+  useEffect(() => {
+    fetch(`/api/historical?region=${encodeURIComponent(selected.region)}`)
+      .then((response) => response.json())
+      .then(setHistorical)
+      .catch(() => setHistorical(null));
+  }, [selected.region]);
   const updateStatus = (value: string) =>
     setStatus((previous) => ({ ...previous, [selected.id]: value }));
   return (
@@ -712,6 +733,40 @@ export default function Home() {
                         Open-Meteo Air Quality
                       </a>{" "}
                       · current estimate
+                    </small>
+                  </div>
+                  <div>
+                    <span>Historical burned-area baseline</span>
+                    <b>
+                      {historical?.available && historical.summary
+                        ? `${historical.summary.seasonality} seasonality`
+                        : "Unavailable"}
+                    </b>
+                    <small>
+                      {historical?.available &&
+                      historical.summary &&
+                      historical.source ? (
+                        <a
+                          href={historical.source.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {historical.region}, month {historical.month}: median{" "}
+                          {Math.round(
+                            historical.summary.medianHa,
+                          ).toLocaleString()}{" "}
+                          ha; P75{" "}
+                          {Math.round(
+                            historical.summary.p75Ha,
+                          ).toLocaleString()}{" "}
+                          ha; {historical.summary.yearsWithBurn}/
+                          {historical.summary.years} years with burn (
+                          {historical.source.coverage})
+                        </a>
+                      ) : (
+                        (historical?.reason ??
+                        "Loading GWIS historical baseline")
+                      )}
                     </small>
                   </div>
                   <div>
